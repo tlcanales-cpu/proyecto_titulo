@@ -1,13 +1,32 @@
-import axios from 'axios';
+const express = require('express');
+const router = express.Router();
+const Pedido = require('../models/Pedido');
 
-const API_URL = 'http://localhost:8081/api/pedidos';
+// Guardar nuevo pedido
+router.post('/', async (req, res) => {
+  const { usuarioId, medicamentos, total } = req.body;
 
-export const getPedidosPorUsuario = async (usuarioId) => {
   try {
-    const response = await axios.get(`${API_URL}/${usuarioId}`);
-    return response.data;
+    const nuevoPedido = new Pedido({ usuario: usuarioId, medicamentos, total });
+    await nuevoPedido.save();
+    res.status(201).json({ message: 'Pedido guardado con éxito' });
   } catch (error) {
-    console.error('Error al obtener pedidos:', error);
-    return [];
+    console.error(error);
+    res.status(500).json({ message: 'Error al guardar el pedido' });
   }
-};
+});
+
+// Obtener pedidos por usuario
+router.get('/:usuarioId', async (req, res) => {
+  const { usuarioId } = req.params;
+
+  try {
+    const pedidos = await Pedido.find({ usuario: usuarioId }).sort({ fecha: -1 });
+    res.json(pedidos);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error al obtener pedidos' });
+  }
+});
+
+module.exports = router;
